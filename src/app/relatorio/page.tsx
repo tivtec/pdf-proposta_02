@@ -25,12 +25,14 @@ const poppins = Poppins({ subsets: ['latin'], weight: ['500', '700'] })
 export default function RelatorioPage({
   searchParams,
 }: {
-  searchParams?: { pessoa?: string; modelo?: string; nome_equipamento?: string; valor?: string }
+  searchParams?: { pessoa?: string; modelo?: string; nome_equipamento?: string; valor?: string; id?: string; fone?: string }
 }) {
   const pessoa = typeof searchParams?.pessoa === 'string' ? searchParams.pessoa : undefined
   const valor = typeof searchParams?.valor === 'string' ? searchParams.valor : undefined
   const nomeEquip = typeof searchParams?.nome_equipamento === 'string' ? searchParams.nome_equipamento : undefined
   const nomeKey = nomeEquip?.trim().toUpperCase()
+  const id = typeof searchParams?.id === 'string' ? searchParams.id : undefined
+  const fone = typeof searchParams?.fone === 'string' ? searchParams.fone : undefined
   const equipMap: Record<string, any> = {
     'VTEC-500': vtec500,
     'VTEC-2000': vtec2000,
@@ -177,8 +179,8 @@ export default function RelatorioPage({
           <li>Clientes que não contribuem com o ICMS devem informar á vendedora para inserção dos impostos interestaduais</li>
           <li>Orçamento válido por 30 dias</li>
           <li>*O investimento apresentado não contempla os acessórios opcionais</li>
-          <li>Número de identificação: 75896969</li>
-          <li>Número de Telefone do Orçamento:  (43)99774110</li>
+          <li>Número de identificação: {id ?? '75896969'}</li>
+          <li>Número de Telefone do Orçamento:  {fone ?? '(43)99774110'}</li>
         </ul>
       </div>
     </main>
