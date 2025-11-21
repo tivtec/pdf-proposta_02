@@ -25,6 +25,16 @@ export async function GET(req: NextRequest) {
   const protocol = isLocal ? 'http' : 'https'
   const query = req.nextUrl.searchParams.toString()
   const targetUrl = `${protocol}://${host}/relatorio${query ? `?${query}` : ''}`
+  const debug = req.nextUrl.searchParams.get('debug')
+
+  if (debug === 'true') {
+    const hasWs = Boolean(process.env.PUPPETEER_WS_ENDPOINT)
+    const isVercel = Boolean(process.env.VERCEL)
+    return new Response(
+      JSON.stringify({ targetUrl, env: { isVercel, hasWs } }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
 
   try {
     const browser = await launchBrowser()
@@ -45,7 +55,9 @@ export async function GET(req: NextRequest) {
     })
   } catch (err: any) {
     const msg = typeof err?.message === 'string' ? err.message : 'PDF generation failed'
-    return new Response(JSON.stringify({ error: msg, url: targetUrl }), {
+    const hasWs = Boolean(process.env.PUPPETEER_WS_ENDPOINT)
+    const isVercel = Boolean(process.env.VERCEL)
+    return new Response(JSON.stringify({ error: msg, url: targetUrl, env: { isVercel, hasWs } }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
     })
