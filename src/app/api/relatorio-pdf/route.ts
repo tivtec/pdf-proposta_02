@@ -7,11 +7,9 @@ export const runtime = 'nodejs'
 async function launchBrowser() {
   const isVercel = Boolean(process.env.VERCEL)
   if (isVercel) {
-    const executablePath = await (typeof (chromium as any).executablePath === 'function'
-      ? (chromium as any).executablePath()
-      : (chromium as any).executablePath)
+    const executablePath = await (chromium as any).executablePath()
     return puppeteerCore.launch({
-      args: chromium.args,
+      args: (chromium as any).args,
       executablePath,
       headless: true,
     })
@@ -27,18 +25,28 @@ export async function GET(req: NextRequest) {
   const query = req.nextUrl.searchParams.toString()
   const targetUrl = `${protocol}://${host}/relatorio${query ? `?${query}` : ''}`
 
-  const browser = await launchBrowser()
-  const page = await browser.newPage()
-  await page.goto(targetUrl, { waitUntil: 'networkidle0' })
-  const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true })
-  await browser.close()
+  try {
+    const browser = await launchBrowser()
+    const page = await browser.newPage()
+    page.setDefaultNavigationTimeout(30000)
+    await page.emulateMediaType('screen')
+    await page.goto(targetUrl, { waitUntil: 'load' })
+    const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true })
+    await browser.close()
 
-  const ab = pdfBuffer.buffer.slice(pdfBuffer.byteOffset, pdfBuffer.byteOffset + pdfBuffer.byteLength)
-  return new Response(ab as any, {
-    headers: {
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': 'inline; filename="relatorio.pdf"',
-      'Cache-Control': 'no-store',
-    },
-  })
+    const ab = pdfBuffer.buffer.slice(pdfBuffer.byteOffset, pdfBuffer.byteOffset + pdfBuffer.byteLength)
+    return new Response(ab as any, {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': 'inline; filename="relatorio.pdf"',
+        'Cache-Control': 'no-store',
+      },
+    })
+  } catch (err: any) {
+    const msg = typeof err?.message === 'string' ? err.message : 'PDF generation failed'
+    return new Response(JSON.stringify({ error: msg, url: targetUrl }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+    })
+  }
 }
