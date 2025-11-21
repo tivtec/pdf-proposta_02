@@ -1,16 +1,20 @@
 import { NextRequest } from 'next/server'
 import { headers } from 'next/headers'
 import chromium from '@sparticuz/chromium'
+import path from 'node:path'
+import fs from 'node:fs'
 import puppeteerCore from 'puppeteer-core'
 export const runtime = 'nodejs'
 
 async function launchBrowser() {
   const isVercel = Boolean(process.env.VERCEL)
   if (isVercel) {
-    const executablePath = await (chromium as any).executablePath()
+    const autoPath: string = await (chromium as any).executablePath()
+    const fallbackPath = path.join(process.cwd(), 'node_modules', '@sparticuz', 'chromium', 'bin', 'chromium')
+    const usePath = fs.existsSync(autoPath) ? autoPath : fallbackPath
     return puppeteerCore.launch({
       args: (chromium as any).args,
-      executablePath,
+      executablePath: usePath,
       headless: true,
     })
   }
