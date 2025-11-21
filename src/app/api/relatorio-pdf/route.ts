@@ -31,8 +31,8 @@ export async function GET(req: NextRequest) {
     })
     await browser.close()
 
-    const ab: ArrayBuffer = pdfBuffer.buffer.slice(pdfBuffer.byteOffset, pdfBuffer.byteOffset + pdfBuffer.byteLength)
-    return new Response(ab, {
+    const uint8 = new Uint8Array(pdfBuffer)
+    return new Response(uint8, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `${debugMode ? 'inline' : 'attachment'}; filename="relatorio.pdf"`,
