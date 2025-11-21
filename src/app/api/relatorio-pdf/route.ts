@@ -7,16 +7,13 @@ import puppeteerCore from 'puppeteer-core'
 export const runtime = 'nodejs'
 
 async function launchBrowser() {
+  const ws = process.env.PUPPETEER_WS_ENDPOINT
+  if (ws) {
+    return puppeteerCore.connect({ browserWSEndpoint: ws })
+  }
   const isVercel = Boolean(process.env.VERCEL)
   if (isVercel) {
-    const autoPath: string = await (chromium as any).executablePath()
-    const fallbackPath = path.join(process.cwd(), 'node_modules', '@sparticuz', 'chromium', 'bin', 'chromium')
-    const usePath = fs.existsSync(autoPath) ? autoPath : fallbackPath
-    return puppeteerCore.launch({
-      args: (chromium as any).args,
-      executablePath: usePath,
-      headless: true,
-    })
+    throw new Error('Missing PUPPETEER_WS_ENDPOINT')
   }
   const puppeteer = (await import('puppeteer')).default
   return puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] })
@@ -34,7 +31,7 @@ export async function GET(req: NextRequest) {
     const page = await browser.newPage()
     page.setDefaultNavigationTimeout(30000)
     await page.emulateMediaType('screen')
-    await page.goto(targetUrl, { waitUntil: 'load' })
+    await page.goto(targetUrl, { waitUntil: 'domcontentloaded' })
     const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true })
     await browser.close()
 
