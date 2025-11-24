@@ -2,12 +2,28 @@ process.env.PLAYWRIGHT_BROWSERS_PATH = process.env.PLAYWRIGHT_BROWSERS_PATH || '
 import { NextRequest } from 'next/server'
 import { headers } from 'next/headers'
 import { chromium } from 'playwright'
+import fs from 'fs'
+import path from 'path'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
+function resolveExecutablePath(): string | undefined {
+  try {
+    const base = path.join(process.cwd(), 'node_modules', 'playwright-core', '.local-browsers')
+    const variants = fs.readdirSync(base)
+    for (const v of variants) {
+      const chromePath = path.join(base, v, 'chrome-linux', 'chrome')
+      if (fs.existsSync(chromePath)) return chromePath
+      const shellPath = path.join(base, v, 'chromium_headless_shell-linux', 'headless_shell')
+      if (fs.existsSync(shellPath)) return shellPath
+    }
+  } catch {}
+  return chromium.executablePath()
+}
+
 async function launchBrowser() {
-  const executablePath = chromium.executablePath()
-  return chromium.launch({ executablePath, args: ['--headless=new', '--no-sandbox', '--disable-setuid-sandbox'] })
+  const executablePath = resolveExecutablePath()
+  return chromium.launch({ executablePath, args: ['--headless=new', '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--single-process', '--no-zygote'] })
 }
 
 export async function GET(req: NextRequest) {
