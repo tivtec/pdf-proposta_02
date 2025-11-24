@@ -4,7 +4,7 @@ const nextConfig = {
   experimental: {
     outputFileTracingIncludes: {
       'src/app/api/relatorio-pdf/route.ts': [
-        './node_modules/playwright-core/.local-browsers/**'
+        'node_modules/playwright-core/.local-browsers/**'
       ],
     },
   },
